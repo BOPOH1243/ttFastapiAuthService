@@ -75,15 +75,14 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     access_token, refresh_token = create_tokens(str(user.id))
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
+from pydantic import BaseModel
+class RefreshRequest(BaseModel):
+    refresh_token: str
 
-@router.post("/refresh", response_model=dict)
-def refresh(payload: dict, db: Session = Depends(get_db)):
-    token = payload.get("refresh_token")
-    if not token:
-        raise HTTPException(status_code=400, detail="Missing refresh token")
-    
+@router.post("/refresh", response_model=Token)
+def refresh(payload: RefreshRequest, db: Session = Depends(get_db)):
     try:
-        data = decode_token(token, expected_type="refresh")
+        data = decode_token(payload.refresh_token, expected_type="refresh")
         user_id = data.get("sub")
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -92,8 +91,8 @@ def refresh(payload: dict, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
 
-    access_token, _ = create_tokens(str(user.id))
-    return {"access_token": access_token}
+    access_token, refresh_token = create_tokens(str(user.id))
+    return {"access_token": access_token, "refresh_token":refresh_token}
 
 
 
