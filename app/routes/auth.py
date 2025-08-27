@@ -3,11 +3,10 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, AP
 from sqlalchemy.orm import Session
 from typing import Optional
 from jose import JWTError
-
 from .. import models, schemas
 from ..db import get_db
 from ..services import get_password_hash, verify_password, create_tokens, decode_token
-from ..schemas import UserCreate, UserOut, Token
+from ..schemas import UserCreate, UserOut, Token, RefreshRequest
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -75,9 +74,6 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     access_token, refresh_token = create_tokens(str(user.id))
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
-from pydantic import BaseModel
-class RefreshRequest(BaseModel):
-    refresh_token: str
 
 @router.post("/refresh", response_model=Token)
 def refresh(payload: RefreshRequest, db: Session = Depends(get_db)):
