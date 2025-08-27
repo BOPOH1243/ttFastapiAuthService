@@ -1,7 +1,7 @@
 # простая API для авторизации и регистрации
 ## Запуск:
 1. клонируйте этот репозиторий `git clone https://github.com/BOPOH1243/ttFastapiAuthService.git` 
-2. запустите docker-compose `sudo docker-compose.yml`
+2. запустите docker-compose `sudo docker-compose up -d`
 3. радуйтесь, всё должно запуститься на 80 порту `https://localhost/docs`
 ## особенности:
 - всё максимально просто, документация есть по адресу `/docs`
