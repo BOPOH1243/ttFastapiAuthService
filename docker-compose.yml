@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15  # Можно указать конкретную версию, например, 15
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: user       # Имя пользователя
+      POSTGRES_PASSWORD: password # Пароль
+      POSTGRES_DB: db           # Имя базы данных
+    ports:
+      - "5432:5432"             # Проброс порта: локальный 5432 -> контейнер 5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Для persistence данных
+    restart: unless-stopped      # Автоперезапуск контейнера
+
+volumes:
+  postgres_data:                 # Определение тома для данных
