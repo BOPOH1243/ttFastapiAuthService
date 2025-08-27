@@ -2,17 +2,53 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:15  # Можно указать конкретную версию, например, 15
+    image: postgres:latest
     container_name: postgres_db
     environment:
-      POSTGRES_USER: user       # Имя пользователя
-      POSTGRES_PASSWORD: password # Пароль
-      POSTGRES_DB: db           # Имя базы данных
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-db}
     ports:
-      - "5432:5432"             # Проброс порта: локальный 5432 -> контейнер 5432
+      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data  # Для persistence данных
-    restart: unless-stopped      # Автоперезапуск контейнера
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fastapi_app
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-db}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-db}:5432/${POSTGRES_DB:-db}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      PYTHONPATH: /code
+    depends_on:
+      - db
+    command: >
+      sh -c "
+      ./wait-for-it.sh db 5432 -- alembic upgrade head &&
+      uvicorn app.main:app --host 0.0.0.0 --port 8000
+      "
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/code
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
 
 volumes:
-  postgres_data:                 # Определение тома для данных
+  postgres_data:
